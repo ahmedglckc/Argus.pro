@@ -1,69 +1,59 @@
-name: Wentra Client - Java Agent ve Otomatik Derleme
+name: Wentra - Final Derleme Sistemi
 
 on:
   push:
     branches: [ "main", "master" ]
-  pull_request:
-    branches: [ "main", "master" ]
   workflow_dispatch: 
 
 jobs:
-  build-java-client:
-    name: Java Agent (JAR) Derlemesi
+  build:
+    name: Wentra JAR Üretimi
     runs-on: ubuntu-latest
     
     steps:
-    - name: Depoyu Klonla
+    - name: 1. Depoyu Klonla
       uses: actions/checkout@v4
 
-    - name: JDK 8 ve JavaFX Ortamını Hazırla
+    - name: 2. JDK 8 ve JavaFX Kurulumu
       uses: actions/setup-java@v4
       with:
         java-version: '8'
         distribution: 'zulu'
         java-package: jdk+fx
-        
-    - name: Profesyonel Ajan Derlemesi
+
+    - name: 3. Akıllı Derleme ve Paketleme
       run: |
-        echo "Adım 1: Klasörler hazırlanıyor..."
-        mkdir -p build/classes
-        mkdir -p build/jar-staging
+        echo "--> Hazırlık yapılıyor..."
+        mkdir -p out/classes out/staging
         
-        echo "Adım 2: Kaynak dosyalar taranıyor..."
-        find WentraReborn-CraftRise/src -name "*.java" > sources.txt
+        # Tüm Java dosyalarını bul
+        find . -name "*.java" > sources.txt
         
-        echo "Adım 3: Derleme (Javac) başlatılıyor..."
-        javac -cp "WentraReborn-CraftRise/libraries/*" -d build/classes @sources.txt
-        
-        echo "Adım 4: Kütüphaneler JAR içine paketleniyor..."
-        cd build/jar-staging
-        for jar in ../../WentraReborn-CraftRise/libraries/*.jar; do
-          jar xf "$jar"
-        done
-        
-        # Gereksiz dosyaları temizle
-        rm -rf META-INF/MANIFEST.MF META-INF/*.RSA META-INF/*.SF META-INF/*.DSA
-        
-        echo "Adım 5: Kodlar birleştiriliyor..."
+        # Dosyalar gerçekten var mı kontrol et
+        if [ ! -s sources.txt ]; then
+          echo "::error:: KRİTİK HATA: Java dosyaları bulunamadı!"
+          exit 1
+        fi
+
+        # Kütüphaneleri bul ve derle
+        echo "--> Derleme işlemi başlatılıyor..."
+        LIBS=$(find . -name "*.jar" | tr '\n' ':')
+        javac -cp "$LIBS" -d out/classes @sources.txt
+
+        # Sınıfları ve kütüphaneleri JAR içinde birleştir
+        echo "--> Paketleme yapılıyor..."
+        cd out/staging
+        find ../.. -name "*.jar" -exec jar xf {} \;
+        rm -rf META-INF/*.RSA META-INF/*.SF META-INF/*.DSA META-INF/MANIFEST.MF
         cp -r ../classes/* .
         
-        echo "Adım 6: KRİTİK - Java Agent Manifesti oluşturuluyor..."
-        # Bu kısım hilenin ban yememesini sağlayan kimliktir
-        echo "Manifest-Version: 1.0" > manifest.txt
-        echo "Main-Class: wentra.Main" >> manifest.txt
-        echo "Premain-Class: wentra.Main" >> manifest.txt
-        echo "Agent-Class: wentra.Main" >> manifest.txt
-        echo "Can-Retransform-Classes: true" >> manifest.txt
-        echo "Can-Redefine-Classes: true" >> manifest.txt
-        echo "" >> manifest.txt # Boş satır zorunludur
+        # Ban Koruması (Agent Manifest)
+        printf "Manifest-Version: 1.0\nMain-Class: wentra.Main\nPremain-Class: wentra.Main\nAgent-Class: wentra.Main\nCan-Retransform-Classes: true\nCan-Redefine-Classes: true\n\n" > manifest.txt
 
-        echo "Adım 7: Nihai WentraClient.jar oluşturuluyor..."
         jar cvfm ../../WentraClient.jar manifest.txt .
-        
-        echo "İşlem başarıyla tamamlandı efendim!"
 
-    - name: JAR Dosyasını İndir
+    - name: 4. JAR Dosyasını İndir
       uses: actions/upload-artifact@v4
       with:
-        name: Wentra-Agent-JAR
+        name: WentraClient-Build
         path: WentraClient.jar
