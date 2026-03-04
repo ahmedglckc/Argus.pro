@@ -1,4 +1,4 @@
-name: Wentra Client - Tam Derleme (Manuel Javac)
+name: Wentra Client - Tam Derleme (JavaFX Destekli)
 
 on:
   push:
@@ -37,13 +37,15 @@ jobs:
     - name: Depoyu Klonla
       uses: actions/checkout@v4
 
-    - name: JDK 8 Ortamını Hazırla (Minecraft 1.8 İçin)
+    # DEĞİŞTİRİLEN KISIM: JavaFX desteği için Zulu dağıtımı kullanılıyor
+    - name: JDK 8 ve JavaFX Ortamını Hazırla
       uses: actions/setup-java@v4
       with:
         java-version: '8'
-        distribution: 'temurin'
+        distribution: 'zulu'
+        java-package: jdk+fx
         
-    - name: Manuel Javac Derlemesi (build.xml olmadan)
+    - name: Manuel Javac Derlemesi
       run: |
         echo "Adım 1: Gerekli klasörler oluşturuluyor..."
         mkdir -p build/classes
@@ -55,30 +57,30 @@ jobs:
         echo "Bulunan dosya sayısı:"
         wc -l sources.txt
         
-        echo "Adım 3: Kütüphaneler (Libraries) classpath'e eklenerek derleme yapılıyor..."
-        # Windows, Mac ve Linux LWJGL kütüphanelerinizi dahil ederek derliyoruz.
+        echo "Adım 3: Kütüphaneler ve JavaFX ortamı ile derleme yapılıyor..."
+        # JavaFX artık Zulu JDK'nın içinde olduğu için ekstra classpath'e gerek yok,
+        # sadece sizin libraries klasörünüzdeki kütüphaneleri tanıtıyoruz.
         javac -cp "WentraReborn-CraftRise/libraries/*" -d build/classes @sources.txt
         
         echo "Adım 4: Kütüphaneler (Libraries) JAR dosyasının içine çıkartılıyor..."
-        # Eğer kütüphaneler JAR'ın içinde olmazsa, oyuna inject ettiğinizde ClassNotFound hatası alırsınız.
         cd build/jar-staging
         for jar in ../../WentraReborn-CraftRise/libraries/*.jar; do
           jar xf "$jar"
         done
         
-        # Gereksiz META-INF dosyalarını siliyoruz ki çakışma yapmasın
+        # Gereksiz imza dosyalarını siliyoruz
         rm -rf META-INF/MANIFEST.MF
         rm -rf META-INF/*.RSA
         rm -rf META-INF/*.SF
         rm -rf META-INF/*.DSA
         
-        echo "Adım 5: Sizin derlenen kodlarınız kütüphanelerle birleştiriliyor..."
+        echo "Adım 5: Derlenen kodlar kütüphanelerle birleştiriliyor..."
         cp -r ../classes/* .
         
         echo "Adım 6: Nihai WentraClient.jar oluşturuluyor..."
         jar cvf ../../WentraClient.jar .
         
-        echo "İşlem tamamlandı!"
+        echo "İşlem başarıyla tamamlandı!"
 
     - name: JAR Çıktısını İndirilebilir Hale Getir
       uses: actions/upload-artifact@v4
