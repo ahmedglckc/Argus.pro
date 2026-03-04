@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="WentraClient" default="build-jar" basedir=".">
+    
+    <property name="src.dir" value="src"/>
+    <property name="build.dir" value="build"/>
+    <property name="classes.dir" value="${build.dir}/classes"/>
+    <property name="jar.dir" value="out/artifacts/WentraReborn_CraftRise_jar"/>
+    <property name="lib.dir" value="libraries"/>
+
+    <path id="classpath">
+        <fileset dir="${lib.dir}" includes="**/*.jar"/>
+    </path>
+
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+        <delete dir="${jar.dir}"/>
+    </target>
+
+    <target name="compile" depends="clean">
+        <mkdir dir="${classes.dir}"/>
+        <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath" includeantruntime="false" source="1.8" target="1.8"/>
+    </target>
+
+    <target name="build-jar" depends="compile">
+        <mkdir dir="${jar.dir}"/>
+        <jar destfile="${jar.dir}/WentraClient.jar" basedir="${classes.dir}">
+            <manifest>
+                </manifest>
+            <zipgroupfileset dir="${lib.dir}" includes="**/*.jar" />
+        </jar>
+    </target>
+
+</project>
