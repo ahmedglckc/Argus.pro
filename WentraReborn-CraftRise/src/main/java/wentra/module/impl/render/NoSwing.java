@@ -1,7 +1,6 @@
 package wentra.module.impl.render;
 
 import com.google.common.eventbus.Subscribe;
-import com.sun.org.apache.xpath.internal.operations.Mod;
 import org.lwjgl.input.Keyboard;
 import wentra.event.impl.RenderEvent;
 import wentra.module.Module;
