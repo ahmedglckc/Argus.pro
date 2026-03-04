@@ -1,15 +1,15 @@
-name: Wentra Client - Tam Derleme (C++ ve Java)
+name: Wentra Client - Tam Derleme (Manuel Javac)
 
 on:
   push:
     branches: [ "main", "master" ]
   pull_request:
     branches: [ "main", "master" ]
-  workflow_dispatch: # Manuel tetikleme butonu ekler
+  workflow_dispatch: 
 
 jobs:
   build-cpp-loader:
-    name: C++ Loader (Injector) Derlemesi
+    name: C++ Injector Derlemesi
     runs-on: windows-latest
     
     steps:
@@ -21,14 +21,13 @@ jobs:
 
     - name: C++ Projesini Derle (Release x64)
       working-directory: ${{ github.workspace }}\Jarload\rac
-      # wentra.vcxproj dosyanızın bulunduğu dizine göre yolu ayarlayın
       run: msbuild wentra.vcxproj /p:Configuration=Release /p:Platform=x64
 
     - name: C++ Çıktısını Yükle
       uses: actions/upload-artifact@v4
       with:
         name: Wentra-Injector-Build
-        path: ${{ github.workspace }}\Jarload\rac\x64\Release\*.exe # veya *.dll
+        path: ${{ github.workspace }}\Jarload\rac\x64\Release\*.exe
 
   build-java-client:
     name: Java Client (JAR) Derlemesi
@@ -38,23 +37,51 @@ jobs:
     - name: Depoyu Klonla
       uses: actions/checkout@v4
 
-    - name: JDK 8 Ortamını Hazırla
+    - name: JDK 8 Ortamını Hazırla (Minecraft 1.8 İçin)
       uses: actions/setup-java@v4
       with:
         java-version: '8'
         distribution: 'temurin'
         
-    - name: Ant Kurulumu
-      run: sudo apt-get install ant -y
+    - name: Manuel Javac Derlemesi (build.xml olmadan)
+      run: |
+        echo "Adım 1: Gerekli klasörler oluşturuluyor..."
+        mkdir -p build/classes
+        mkdir -p build/jar-staging
         
-    # IntelliJ Artifact dosyasını komut satırından derlemek için Ant kullanıyoruz.
-    # Bunun çalışması için projenizin kök dizininde bir build.xml dosyası oluşturmanız gerekecektir.
-    - name: Ant ile JAR Derle
-      working-directory: ./WentraReborn-CraftRise
-      run: ant -f build.xml
+        echo "Adım 2: Tüm .java kaynak dosyaları bulunuyor..."
+        find WentraReborn-CraftRise/src -name "*.java" > sources.txt
+        
+        echo "Bulunan dosya sayısı:"
+        wc -l sources.txt
+        
+        echo "Adım 3: Kütüphaneler (Libraries) classpath'e eklenerek derleme yapılıyor..."
+        # Windows, Mac ve Linux LWJGL kütüphanelerinizi dahil ederek derliyoruz.
+        javac -cp "WentraReborn-CraftRise/libraries/*" -d build/classes @sources.txt
+        
+        echo "Adım 4: Kütüphaneler (Libraries) JAR dosyasının içine çıkartılıyor..."
+        # Eğer kütüphaneler JAR'ın içinde olmazsa, oyuna inject ettiğinizde ClassNotFound hatası alırsınız.
+        cd build/jar-staging
+        for jar in ../../WentraReborn-CraftRise/libraries/*.jar; do
+          jar xf "$jar"
+        done
+        
+        # Gereksiz META-INF dosyalarını siliyoruz ki çakışma yapmasın
+        rm -rf META-INF/MANIFEST.MF
+        rm -rf META-INF/*.RSA
+        rm -rf META-INF/*.SF
+        rm -rf META-INF/*.DSA
+        
+        echo "Adım 5: Sizin derlenen kodlarınız kütüphanelerle birleştiriliyor..."
+        cp -r ../classes/* .
+        
+        echo "Adım 6: Nihai WentraClient.jar oluşturuluyor..."
+        jar cvf ../../WentraClient.jar .
+        
+        echo "İşlem tamamlandı!"
 
-    - name: JAR Çıktısını Yükle
+    - name: JAR Çıktısını İndirilebilir Hale Getir
       uses: actions/upload-artifact@v4
       with:
         name: Wentra-Client-JAR
-        path: ./WentraReborn-CraftRise/out/artifacts/**/*.jar
+        path: WentraClient.jar
