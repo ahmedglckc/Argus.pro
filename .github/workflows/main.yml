@@ -1,4 +1,4 @@
-name: Wentra Client - Tam Derleme (JavaFX Destekli)
+name: Wentra Client - Java Agent ve Otomatik Derleme
 
 on:
   push:
@@ -8,36 +8,14 @@ on:
   workflow_dispatch: 
 
 jobs:
-  build-cpp-loader:
-    name: C++ Injector Derlemesi
-    runs-on: windows-latest
-    
-    steps:
-    - name: Depoyu Klonla
-      uses: actions/checkout@v4
-
-    - name: MSBuild Kurulumu
-      uses: microsoft/setup-msbuild@v2
-
-    - name: C++ Projesini Derle (Release x64)
-      working-directory: ${{ github.workspace }}\Jarload\rac
-      run: msbuild wentra.vcxproj /p:Configuration=Release /p:Platform=x64
-
-    - name: C++ Çıktısını Yükle
-      uses: actions/upload-artifact@v4
-      with:
-        name: Wentra-Injector-Build
-        path: ${{ github.workspace }}\Jarload\rac\x64\Release\*.exe
-
   build-java-client:
-    name: Java Client (JAR) Derlemesi
+    name: Java Agent (JAR) Derlemesi
     runs-on: ubuntu-latest
     
     steps:
     - name: Depoyu Klonla
       uses: actions/checkout@v4
 
-    # DEĞİŞTİRİLEN KISIM: JavaFX desteği için Zulu dağıtımı kullanılıyor
     - name: JDK 8 ve JavaFX Ortamını Hazırla
       uses: actions/setup-java@v4
       with:
@@ -45,45 +23,47 @@ jobs:
         distribution: 'zulu'
         java-package: jdk+fx
         
-    - name: Manuel Javac Derlemesi
+    - name: Profesyonel Ajan Derlemesi
       run: |
-        echo "Adım 1: Gerekli klasörler oluşturuluyor..."
+        echo "Adım 1: Klasörler hazırlanıyor..."
         mkdir -p build/classes
         mkdir -p build/jar-staging
         
-        echo "Adım 2: Tüm .java kaynak dosyaları bulunuyor..."
+        echo "Adım 2: Kaynak dosyalar taranıyor..."
         find WentraReborn-CraftRise/src -name "*.java" > sources.txt
         
-        echo "Bulunan dosya sayısı:"
-        wc -l sources.txt
-        
-        echo "Adım 3: Kütüphaneler ve JavaFX ortamı ile derleme yapılıyor..."
-        # JavaFX artık Zulu JDK'nın içinde olduğu için ekstra classpath'e gerek yok,
-        # sadece sizin libraries klasörünüzdeki kütüphaneleri tanıtıyoruz.
+        echo "Adım 3: Derleme (Javac) başlatılıyor..."
         javac -cp "WentraReborn-CraftRise/libraries/*" -d build/classes @sources.txt
         
-        echo "Adım 4: Kütüphaneler (Libraries) JAR dosyasının içine çıkartılıyor..."
+        echo "Adım 4: Kütüphaneler JAR içine paketleniyor..."
         cd build/jar-staging
         for jar in ../../WentraReborn-CraftRise/libraries/*.jar; do
           jar xf "$jar"
         done
         
-        # Gereksiz imza dosyalarını siliyoruz
-        rm -rf META-INF/MANIFEST.MF
-        rm -rf META-INF/*.RSA
-        rm -rf META-INF/*.SF
-        rm -rf META-INF/*.DSA
+        # Gereksiz dosyaları temizle
+        rm -rf META-INF/MANIFEST.MF META-INF/*.RSA META-INF/*.SF META-INF/*.DSA
         
-        echo "Adım 5: Derlenen kodlar kütüphanelerle birleştiriliyor..."
+        echo "Adım 5: Kodlar birleştiriliyor..."
         cp -r ../classes/* .
         
-        echo "Adım 6: Nihai WentraClient.jar oluşturuluyor..."
-        jar cvf ../../WentraClient.jar .
-        
-        echo "İşlem başarıyla tamamlandı!"
+        echo "Adım 6: KRİTİK - Java Agent Manifesti oluşturuluyor..."
+        # Bu kısım hilenin ban yememesini sağlayan kimliktir
+        echo "Manifest-Version: 1.0" > manifest.txt
+        echo "Main-Class: wentra.Main" >> manifest.txt
+        echo "Premain-Class: wentra.Main" >> manifest.txt
+        echo "Agent-Class: wentra.Main" >> manifest.txt
+        echo "Can-Retransform-Classes: true" >> manifest.txt
+        echo "Can-Redefine-Classes: true" >> manifest.txt
+        echo "" >> manifest.txt # Boş satır zorunludur
 
-    - name: JAR Çıktısını İndirilebilir Hale Getir
+        echo "Adım 7: Nihai WentraClient.jar oluşturuluyor..."
+        jar cvfm ../../WentraClient.jar manifest.txt .
+        
+        echo "İşlem başarıyla tamamlandı efendim!"
+
+    - name: JAR Dosyasını İndir
       uses: actions/upload-artifact@v4
       with:
-        name: Wentra-Client-JAR
+        name: Wentra-Agent-JAR
         path: WentraClient.jar
