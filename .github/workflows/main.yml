@@ -1,51 +1,60 @@
-name: Build Client JAR
+name: Wentra Client - Tam Derleme (C++ ve Java)
 
 on:
   push:
     branches: [ "main", "master" ]
   pull_request:
     branches: [ "main", "master" ]
+  workflow_dispatch: # Manuel tetikleme butonu ekler
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
+  build-cpp-loader:
+    name: C++ Loader (Injector) Derlemesi
+    runs-on: windows-latest
+    
     steps:
-    # 1. Depodaki kodları çalışma alanına çeker
     - name: Depoyu Klonla
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
-    # 2. Java 8 ortamını kurar (Minecraft 1.8 ve CraftRise client'ları için gereklidir)
-    - name: JDK 8 Kurulumu
-      uses: actions/setup-java@v3
+    - name: MSBuild Kurulumu
+      uses: microsoft/setup-msbuild@v2
+
+    - name: C++ Projesini Derle (Release x64)
+      working-directory: ${{ github.workspace }}\Jarload\rac
+      # wentra.vcxproj dosyanızın bulunduğu dizine göre yolu ayarlayın
+      run: msbuild wentra.vcxproj /p:Configuration=Release /p:Platform=x64
+
+    - name: C++ Çıktısını Yükle
+      uses: actions/upload-artifact@v4
+      with:
+        name: Wentra-Injector-Build
+        path: ${{ github.workspace }}\Jarload\rac\x64\Release\*.exe # veya *.dll
+
+  build-java-client:
+    name: Java Client (JAR) Derlemesi
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Depoyu Klonla
+      uses: actions/checkout@v4
+
+    - name: JDK 8 Ortamını Hazırla
+      uses: actions/setup-java@v4
       with:
         java-version: '8'
         distribution: 'temurin'
+        
+    - name: Ant Kurulumu
+      run: sudo apt-get install ant -y
+        
+    # IntelliJ Artifact dosyasını komut satırından derlemek için Ant kullanıyoruz.
+    # Bunun çalışması için projenizin kök dizininde bir build.xml dosyası oluşturmanız gerekecektir.
+    - name: Ant ile JAR Derle
+      working-directory: ./WentraReborn-CraftRise
+      run: ant -f build.xml
 
-    # 3. DERLEME ADIMI 
-    # Not: Projeniz hangi inşa aracını kullanıyorsa, sadece onun başındaki '#' işaretini kaldırın.
-
-    # EĞER PROJE GRADLE KULLANIYORSA:
-    # - name: Gradle ile JAR oluştur
-    #   run: chmod +x gradlew && ./gradlew build
-
-    # EĞER PROJE MAVEN KULLANIYORSA:
-    # - name: Maven ile JAR oluştur
-    #   run: mvn clean package
-
-    # EĞER PROJENİZDE SADECE INTELLIJ ARTIFACTS VARSA:
-    # GitHub Actions doğrudan IntelliJ ayarlarına erişemediği için projeyi 
-    # javac komutlarıyla veya mevcutsa bir Ant build.xml dosyasıyla derlemeniz gerekebilir.
-    # - name: Manuel veya Ant ile Derle
-    #   run: ant build
-
-    # 4. Oluşan JAR dosyasını GitHub paneline "Artifact" olarak yükler (Böylece indirebilirsiniz)
-    - name: JAR Dosyasını Çıktı Olarak Yükle
-      uses: actions/upload-artifact@v3
+    - name: JAR Çıktısını Yükle
+      uses: actions/upload-artifact@v4
       with:
-        name: Wentra-Client-Build
-        # Projenizin derleme sonrası JAR'ı nereye çıkardığına bağlı olarak yolu düzenleyin:
-        path: |
-          **/build/libs/*.jar
-          **/target/*.jar
-          **/out/artifacts/**/*.jar
+        name: Wentra-Client-JAR
+        path: ./WentraReborn-CraftRise/out/artifacts/**/*.jar
