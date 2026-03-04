@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="riyal anticheat fuck">
+      <UniqueIdentifier>{b424fa28-70b7-4a9e-a1e8-f502984fbd66}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="riyal anticheat fuck\MinHook">
+      <UniqueIdentifier>{08717a49-5a58-4aa2-be03-fcafc7af8d6b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>riyal anticheat fuck</Filter>
+    </ClCompile>
+    <ClCompile Include="transformer\Transformer.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Dependencies\include\MinHook.h">
+      <Filter>riyal anticheat fuck\MinHook</Filter>
+    </ClInclude>
+    <ClInclude Include="includes.h">
+      <Filter>riyal anticheat fuck</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\lib\JNI\classfile_constants.h" />
+    <ClInclude Include="Dependencies\lib\JNI\jawt.h" />
+    <ClInclude Include="Dependencies\lib\JNI\jawt_md.h" />
+    <ClInclude Include="Dependencies\lib\JNI\jdwpTransport.h" />
+    <ClInclude Include="Dependencies\lib\JNI\jni.h" />
+    <ClInclude Include="Dependencies\lib\JNI\jni_md.h" />
+    <ClInclude Include="Dependencies\lib\JNI\jvmti.h" />
+    <ClInclude Include="Dependencies\lib\JNI\jvmticmlr.h" />
+    <ClInclude Include="Dependencies\lib\JNI\MinHook.h" />
+    <ClInclude Include="transformer\Transformer.h" />
+    <ClInclude Include="XorStr.hpp" />
+    <ClInclude Include="Detours.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="Dependencies\lib\libMinHook-x64.lib" />
+    <Library Include="Dependencies\lib\JNI\jvm.lib" />
+  </ItemGroup>
+</Project>

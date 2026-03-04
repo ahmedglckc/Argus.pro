@@ -1,0 +1,8 @@
+﻿  main.cpp
+  Transformer.cpp
+  Previous IPDB not found, fall back to full compilation.
+LINK : warning LNK4098: defaultlib 'LIBCMTD' diğer kitaplıkların kullanımı ile çakışıyor; /NODEFAULTLIB:library kullanın
+  Kod üretiliyor
+  All 222 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Kodun üretilmesi tamamlandı
+  wentra.vcxproj -> C:\Users\118ap\Desktop\Programlar\Oyun\Minecaft\CraftRise-RicheaxJarLoad\x64\Release\wentra.dll
