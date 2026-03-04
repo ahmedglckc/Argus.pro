@@ -1,0 +1,51 @@
+name: Build Client JAR
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Depodaki kodları çalışma alanına çeker
+    - name: Depoyu Klonla
+      uses: actions/checkout@v3
+
+    # 2. Java 8 ortamını kurar (Minecraft 1.8 ve CraftRise client'ları için gereklidir)
+    - name: JDK 8 Kurulumu
+      uses: actions/setup-java@v3
+      with:
+        java-version: '8'
+        distribution: 'temurin'
+
+    # 3. DERLEME ADIMI 
+    # Not: Projeniz hangi inşa aracını kullanıyorsa, sadece onun başındaki '#' işaretini kaldırın.
+
+    # EĞER PROJE GRADLE KULLANIYORSA:
+    # - name: Gradle ile JAR oluştur
+    #   run: chmod +x gradlew && ./gradlew build
+
+    # EĞER PROJE MAVEN KULLANIYORSA:
+    # - name: Maven ile JAR oluştur
+    #   run: mvn clean package
+
+    # EĞER PROJENİZDE SADECE INTELLIJ ARTIFACTS VARSA:
+    # GitHub Actions doğrudan IntelliJ ayarlarına erişemediği için projeyi 
+    # javac komutlarıyla veya mevcutsa bir Ant build.xml dosyasıyla derlemeniz gerekebilir.
+    # - name: Manuel veya Ant ile Derle
+    #   run: ant build
+
+    # 4. Oluşan JAR dosyasını GitHub paneline "Artifact" olarak yükler (Böylece indirebilirsiniz)
+    - name: JAR Dosyasını Çıktı Olarak Yükle
+      uses: actions/upload-artifact@v3
+      with:
+        name: Wentra-Client-Build
+        # Projenizin derleme sonrası JAR'ı nereye çıkardığına bağlı olarak yolu düzenleyin:
+        path: |
+          **/build/libs/*.jar
+          **/target/*.jar
+          **/out/artifacts/**/*.jar
